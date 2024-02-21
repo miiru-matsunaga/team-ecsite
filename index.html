@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+<meta charset="UTF-8" />
+
+<link href="/css/reset.css" th:href="@{/css/reset.css}" rel="stylesheet" />
+<link href="/css/style.css" th:href="@{/css/style.css}" rel="stylesheet" />
+
+<title>DRAGON WARMTH</title>
+</head>
+<body>
+
+<header th:insert="fragments/page_header::pageHeader"></header>
+
+<main>
+  <div class="container">
+    <form name="searchForm" action="/dragon/searchItem">
+      カテゴリ
+      <select name="category" id="category">
+        <option value="0"></option>
+        <option
+          th:each="category: ${categories}"
+          th:selected="${selected == category.id }"
+          th:value="${category.id}"
+          th:text="${category.categoryName}">
+        </option>
+      </select>
+      商品名（部分一致）
+      <input type="text" name="keywords" th:value="${keywords}"/>
+      <button type="submit">検索</button>
+    </form>
+
+    <div class="noData" th:if="${products == null || products.size() == 0}">
+      <p class="info">検索結果はありません。</p>
+    </div>
+    <table class="top" th:if="${products != null && products.size() > 0}">
+      <tr>
+        <th>画像</th><th>商品名</th><th>価格(円)</th><th>個数</th><th>カート</th>
+      </tr>
+      <tr th:each="item: ${products}">
+        <td class="image">
+          <a href="/dragon/product/" th:href="@{/dragon/product/{id}(id=${item.id})}">
+            <img class="itemImage" th:src="${item.imageFullPath}" />
+          </a>
+        </td>
+        <td>
+          <a href="/dragon/product/" th:href="@{/dragon/product/{id}(id=${item.id})}">
+            <label th:text="${item.productName}"></label>
+          </a>
+        </td>
+        <td class="number" th:text="${item.price}" />
+        <td class="componentTd">
+          <input type="number" id="productCount" class="count number" name="productCount" value="0" min="0" step="1"/>
+          <input type="hidden" id="productId" name="productId" th:value="${item.id}"/>
+        </td>
+        <td class="componentTd"><button class="cartButton">追加</button></td>
+      </tr>
+    </table>
+  </div>
+</main>
+
+<script th:inline="javascript">
+/*<![CDATA[*/
+/*
+ * 画面表示時 (onLoad) に動作する処理群
+ */
+document.addEventListener("DOMContentLoaded", event => {
+  // "class=cartButton" を持つ要素(複数存在するため class 指定)を取得する
+  const cartBtns = document.querySelectorAll(".cartButton");
+  // cartBtns をループさせ、個々のボタンにて "click" イベントが発火した際 addCart関数を呼び出すよう設定する
+  cartBtns.forEach(btn => {
+    btn.addEventListener("click", addCart);
+  });
+});
+
+/**
+ * カートに追加処理をおこなう
+ * @param event カートボタンのクリックイベント
+ */
+function addCart(event) {
+  event.preventDefault(); // デフォルトのフォーム送信を防止
+      const tr= event.target.closest('tr'); // ボタンが含まれる行（tr要素）
+      const productId = tr.querySelector("input[name='productId']").value;
+      const productCount = tr.querySelector("input[name='productCount']").value;
+
+
+      if (productCount == 0 || productCount == '') {
+        alert("個数が0です。");
+        return;
+      }
+  const form = document.createElement('form');
+  form.method = 'post';
+  form.action = '/dragon/cart/add'; 
+
+  const productIdInput = document.createElement('input');
+  productIdInput.type = 'hidden';
+  productIdInput.name = 'productId';
+  productIdInput.value = productId;
+  form.appendChild(productIdInput);
+
+  const productCountInput = document.createElement('input');
+  productCountInput.type = 'hidden';
+  productCountInput.name = 'productCount';
+  productCountInput.value = productCount;
+  form.appendChild(productCountInput);
+
+  document.body.appendChild(form);
+  form.submit();
+}
+/*]]>*/
+</script>
+
+
+</body>
+</html>
